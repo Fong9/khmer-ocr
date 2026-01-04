@@ -41,6 +41,7 @@ function handleFiles(files) {
         if (file.type === "application/pdf") {
             content = document.createElement("div");
             content.innerText = "PDF";
+            content.className = "pdf";
         } else {
             content = document.createElement("img");
             content.src = URL.createObjectURL(file);
@@ -74,16 +75,12 @@ dropZone.addEventListener("dragover", e => {
     e.preventDefault();
     dropZone.classList.add("dragover");
 });
-
 dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-
 dropZone.addEventListener("drop", e => {
     e.preventDefault();
     dropZone.classList.remove("dragover");
     handleFiles([...e.dataTransfer.files]);
 });
-
-// Make drop zone clickable
 dropZone.addEventListener("click", () => input.click());
 
 // ===== Paste button =====
@@ -93,7 +90,7 @@ document.getElementById("pasteBtn").addEventListener("click", async () => {
         for (const item of items) {
             for (const type of item.types) {
                 if (type.startsWith("image/")) {
-                    if (uploadedFiles.length >= 5) return alert("Max 5 files");
+                    if (uploadedFiles.length >= 5) return alert("Max 5 files allowed");
                     const blob = await item.getType(type);
                     handleFiles([new File([blob], `pasted-${Date.now()}.png`, {type})]);
                     return;
@@ -143,12 +140,19 @@ extractBtn.addEventListener("click", async () => {
     uploadedFiles.forEach(f => formData.append("files", f));
 
     try {
-        const res = await fetch("https://text-generator-qf0i.onrender.com", { method:"POST", body: formData });
+        // ⚡ FIXED: Added /ocr endpoint to backend URL
+        const res = await fetch("https://text-generator-qf0i.onrender.com/ocr", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
         const data = await res.json();
-        resultArea.value = data.text || data.error;
-    } catch(e) {
+        resultArea.value = data.text || data.error || "No text extracted";
+    } catch (e) {
         console.error(e);
-        error.innerText = "Server error. Is Flask running?";
+        error.innerText = "Server error. Make sure your Flask backend is running and /ocr is accessible.";
     }
 
     loading.innerText = "";
