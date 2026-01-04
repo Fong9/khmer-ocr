@@ -143,7 +143,7 @@ extractBtn.addEventListener("click", async () => {
     uploadedFiles.forEach(f => formData.append("files", f));
 
     try {
-        const res = await fetch("http://127.0.0.1:5000/ocr", { method:"POST", body: formData });
+        const res = await fetch("https://my-ocr-backend.up.railway.app/ocr", { method:"POST", body: formData });
         const data = await res.json();
         resultArea.value = data.text || data.error;
     } catch(e) {
